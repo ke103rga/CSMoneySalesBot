@@ -6,6 +6,8 @@ from bs4 import BeautifulSoup
 import os
 import json
 import time
+import aiohttp
+import aiofiles
 
 
 executable_path = "C:\\Users\\Виктория\\PycharmProjects\\UniversitiesParser\\chromedriver_win32\\chromedriver.exe"
@@ -50,24 +52,42 @@ async def get_data(weapon, dir_path=f"{os.getcwd()}\weapons_data"):
     items = []
     i = 60
 
+    # while True:
+    #     try:
+    #         resp = requests.get(f"https://inventories.cs.money/5.0/load_bots_inventory/730?buyBonus=35"
+    #                             f"&isStore=true&limit=60&maxPrice=10000&minPrice=1&offset={i}"
+    #                             f"&sort=botFirst&type={weapons[weapon]['type']}&withStack=true")
+    #         items_list = resp.json().get("items")
+    #         items.extend(items_list)
+    #         if len(items_list) < 60:
+    #             break
+    #         i += 60
+    #     except:
+    #         break
+
     while True:
         try:
-            resp = requests.get(f"https://inventories.cs.money/5.0/load_bots_inventory/730?buyBonus=35"
-                                f"&isStore=true&limit=60&maxPrice=10000&minPrice=1&offset={i}"
-                                f"&sort=botFirst&type={weapons[weapon]['type']}&withStack=true")
-            items_list = resp.json().get("items")
-            items.extend(items_list)
-            if len(items_list) < 60:
-                break
-            i += 60
-        except:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"https://inventories.cs.money/5.0/load_bots_inventory/730?buyBonus=35"
+                                       f"&isStore=true&limit=60&maxPrice=10000&minPrice=1&offset={i}"
+                                       f"&sort=botFirst&type={weapons[weapon]['type']}&withStack=true") as resp:
+                    if resp.status == 200:
+                        items_list = resp.json().get("items")
+                        items.extend(items_list)
+                        if len(items_list) < 60:
+                            break
+                        i += 60
+        except Exception:
             break
 
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)
 
-    with open(f"{dir_path}/items_{weapon}.json", "w", encoding="utf-8") as json_file:
+    async with aiofiles.open(f"{dir_path}/items_{weapon}.json", mode='w') as json_file:
         json.dump(items, json_file, indent=4, ensure_ascii=False)
+    #
+    # with open(f"{dir_path}/items_{weapon}.json", "w", encoding="utf-8") as json_file:
+    #     json.dump(items, json_file, indent=4, ensure_ascii=False)
 
 
 async def parse_weapon_type(weapon, dir_path=f"{os.getcwd()}\weapons_data"):

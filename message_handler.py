@@ -73,7 +73,6 @@ async def do_continue(message: types.Message):
             del users[user_id]
 
 
-
 async def get_sale_data(weapon, user_id, dir_path=f"{os.getcwd()}\weapons_data"):
     with open(f"{dir_path}/sales_{weapon}.json",encoding="utf-8") as sales_file:
         sales_data = json.load(sales_file)
